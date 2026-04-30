@@ -1,85 +1,66 @@
+import { BaseController } from "./baseController.js";
 import User from "../models/User.js";
 
-class UserController {
-  // GET ALL
-  async getUsers(req, res) {
+class UserController extends BaseController {
+  // GET all users
+  getUsers = async (req, res) => {
     try {
       const users = await User.getAll();
-      res.json(users);
+      this.success(res, "Users retrieved successfully", users);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      this.error(res, error.message, 500);
     }
   }
 
-  // GET BY ID
-  async getUserById(req, res) {
+  // GET user by ID
+  getUserById = async (req, res) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-
       const user = await User.getById(id);
-
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json(user);
+      if (!user) return this.error(res, "User not found", 404);
+      this.success(res, "User retrieved successfully", user);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      this.error(res, error.message, 500);
     }
   }
 
-  // CREATE
-  async createUser(req, res) {
+  // Create user
+  createUser = async (req, res) => {
     try {
-      const { name, email } = req.body; // destructuring
-
+      const { name, email } = req.body ?? {};
       if (!name || !email) {
-        return res.status(400).json({ message: "Missing fields" });
+        return this.error(res, "Name and email are required", 400);
       }
-
       const result = await User.create({ name, email });
-
-      res.status(201).json({
-        message: "User created",
-        insertId: result.insertId,
-      });
+      const user = await User.getById(result.insertId);
+      this.success(res, "User created successfully", user, 201);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      this.error(res, error.message, 500);
     }
   }
 
-  // UPDATE
-  async updateUser(req, res) {
+  // Update user
+  updateUser = async (req, res) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      const { name, email } = req.body;
-
-      const result = await User.update(id, { name, email });
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json({ message: "User updated" });
+      const result = await User.update(id, req.body);
+      if (result.affectedRows === 0) return this.error(res, "User not found", 404);
+      const updatedUser = await User.getById(id);
+      this.success(res, "User updated successfully", updatedUser);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      this.error(res, error.message, 500);
     }
   }
 
-  // DELETE
-  async deleteUser(req, res) {
+  // Delete user
+  deleteUser = async (req, res) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-
       const result = await User.delete(id);
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json({ message: "User deleted" });
+      if (result.affectedRows === 0) return this.error(res, "User not found", 404);
+      this.success(res, "User deleted successfully", { id });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      this.error(res, error.message, 500);
     }
   }
 }
