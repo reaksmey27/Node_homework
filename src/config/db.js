@@ -1,12 +1,13 @@
-import mysql from "mysql2/promise";
+import mysql from 'mysql2/promise';
 
-export const db = await mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "node_mvc",
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'testdb',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-console.log("✅ MySQL Connected");
-
-export default db;
+export default pool;

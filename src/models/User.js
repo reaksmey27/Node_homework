@@ -1,40 +1,128 @@
-import db from "../config/db.js";
+import BaseModel from './BaseModel.js';
+import pool from '../config/db.js';
 
-class User {
-  // GET ALL
-  static async getAll() {
-    const [rows] = await db.execute("SELECT * FROM users");
-    return rows;
+class User extends BaseModel {
+  constructor(name, email, age, id = null) {
+    super('users');
+    this.id = id;
+    this.name = name;
+    this.email = email;
+    this.age = age;
   }
 
-  // GET BY ID
-  static async getById(id) {
-    const [rows] = await db.execute("SELECT * FROM users WHERE id = ?", [id]);
-    return rows[0];
+  /**
+   * Find all users or with specific conditions
+   */
+  async find(conditions = {}) {
+    try {
+      let query = `SELECT * FROM ${this.tableName}`;
+      let values = [];
+
+      if (Object.keys(conditions).length > 0) {
+        const { whereClause, values: conditionValues } = this.buildWhereClause(conditions);
+        query += ` ${whereClause}`;
+        values = conditionValues;
+      }
+
+      const [rows] = await pool.query(query, values);
+      return rows;
+    } catch (error) {
+      throw new Error(`Error finding users: ${error.message}`);
+    }
   }
 
-  // CREATE
-  static async create({ name, email }) {
-    const [result] = await db.execute(
-      "INSERT INTO users (name, email) VALUES (?, ?)",
-      [name, email]
-    );
-    return result;
+  /**
+   * Get a single user by ID
+   */
+  async get(id) {
+    try {
+      const [rows] = await pool.query(
+        `SELECT * FROM ${this.tableName} WHERE id = ?`,
+        [id]
+      );
+      return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+      throw new Error(`Error fetching user: ${error.message}`);
+    }
   }
 
-  // UPDATE
-  static async update(id, { name, email }) {
-    const [result] = await db.execute(
-      "UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email) WHERE id = ?",
-      [name, email, id]
-    );
-    return result;
+  /**
+   * Create a new user
+   */
+  async create(data) {
+    try {
+      const { columns, placeholders, values } = this.buildInsertQuery(data);
+      const [result] = await pool.query(
+        `INSERT INTO ${this.tableName} (${columns}) VALUES (${placeholders})`,
+        values
+      );
+      return { id: result.insertId, ...data };
+    } catch (error) {
+      throw new Error(`Error creating user: ${error.message}`);
+    }
   }
 
-  // DELETE
-  static async delete(id) {
-    const [result] = await db.execute("DELETE FROM users WHERE id = ?", [id]);
-    return result;
+  /**
+   * Update a user by ID
+   */
+  async update(id, data) {
+    try {
+      const { setClause, values } = this.buildUpdateQuery(data);
+      await pool.query(
+        `UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`,
+        [...values, id]
+      );
+      return { id, ...data };
+    } catch (error) {
+      throw new Error(`Error updating user: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete a user by ID
+   */
+  async delete(id) {
+    try {
+      const [result] = await pool.query(
+        `DELETE FROM ${this.tableName} WHERE id = ?`,
+        [id]
+      );
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error(`Error deleting user: ${error.message}`);
+    }
+  }
+
+  // Legacy static methods for backward compatibility
+  static async getAllUsers() {
+    const user = new User('', '', 0);
+    return user.find();
+  }
+
+  static async getUserById(id) {
+    const user = new User('', '', 0);
+    return user.get(id);
+  }
+
+  static async deleteUser(id) {
+    const user = new User('', '', 0);
+    return user.delete(id);
+  }
+
+  // Instance method for legacy code
+  async save() {
+    try {
+      const data = {
+        name: this.name,
+        email: this.email,
+        age: this.age
+      };
+      const result = await this.create(data);
+      this.id = result.id;
+      return this;
+    } catch (error) {
+      throw new Error(`Error saving user: ${error.message}`);
+    }
   }
 }
 
