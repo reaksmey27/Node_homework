@@ -1,49 +1,49 @@
-// src/models/User.js
+// src/models/Product.js
 import { getConnection } from '../config/db.js';
 import { BaseModel } from './BaseModel.js';
 
-export class UserModel extends BaseModel {
+export class Product extends BaseModel {
     static async getAll() {
         const conn = await getConnection();
-        const [rows] = await conn.query('SELECT * FROM users');
+        const [rows] = await conn.query('SELECT * FROM products');
         return rows;
     }
 
-    static async create(name) {
+    static async create(name, price) {
         const conn = await getConnection();
         const [result] = await conn.execute(
-            'INSERT INTO users (user) VALUES (?)',
-            [name]
+            'INSERT INTO products (name, price) VALUES (?, ?)',
+            [name, price]
         );
-        return { id: result.insertId, name };
+        return { id: result.insertId, name, price };
     }
 
     static async find(id) {
         const conn = await getConnection();
         const [rows] = await conn.execute(
-            'SELECT * FROM users WHERE id = ?',
+            'SELECT * FROM products WHERE id = ?',
             [id]
         );
         return rows[0];
     }
 
-    static async update(name, id) {
+    static async update(name, price, id) {
         const conn = await getConnection();
         await conn.execute(
-            'UPDATE users SET user = ? WHERE id = ?',
-            [name, id]
+            'UPDATE products SET name = ?, price = ? WHERE id = ?',
+            [name, price, id]
         );
-        return { id, name };
+        return { id, name, price };
     }
 
     static async delete(id) {
         const conn = await getConnection();
         await conn.execute(
-            'DELETE FROM users WHERE id = ?',
+            'DELETE FROM products WHERE id = ?',
             [id]
         );
         return true;
     }
 }
- 
-export default UserModel;
+
+export default Product;

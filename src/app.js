@@ -1,7 +1,6 @@
-import 'dotenv/config';
 import express from 'express';
 import userRoutes from './routes/userRoutes.js';
-import { connectDatabase } from './config/db.js';
+import productRoutes from './routes/productroute.js';
 
 const app = express();
 
@@ -9,20 +8,7 @@ const app = express();
 app.use(express.json());
 
 // Routes
-app.use('/', userRoutes);
+app.use('/users', userRoutes);
+app.use('/products', productRoutes);
 
-const PORT = process.env.PORT || 3000;
-
-async function startServer() {
-    try {
-        await connectDatabase();
-        app.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`);
-        });
-    } catch (error) {
-        console.error(`Failed to start server: ${error.message || error}`);
-        process.exit(1);
-    }
-}
-
-startServer();
+export default app;

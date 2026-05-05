@@ -1,56 +1,55 @@
-import { UserModel } from "../models/userModel.js";
+import { UserModel as User } from "../models/userModel.js";
 import { BaseController } from "./baseController.js";
 
-export class UserController extends BaseController{
-    // GET all users
+export class UserController extends BaseController {
+
     usersList = async (req, res) => {
         try {
-            const users = await UserModel.getAll();
+            const users = await User.getAll();
             this.success(res, 200, 'List of users', users);
         } catch (error) {
             this.error(res, 500, error.message);
         }
     }
 
-    // Create user
     createUser = async (req, res) => {
-        const name = req.body.name;
         try {
-            const user = await UserModel.create(name);
-            this.success(res, 200, 'Created user', user);
+            const { name } = req.body;
+            const user = await User.create(name);
+            this.success(res, 201, 'Created user', user);
         } catch (error) {
             this.error(res, 500, error.message);
         }
     }
 
-    // Update user
     updateUser = async (req, res) => {
-        const id = parseInt(req.params.id);
-        const name = req.body.name;
         try {
-            const user = await UserModel.find(id);
-            if (user.length === 0) {
-                this.error(res, 404, 'User not found');
-            }
-            await UserModel.update(name, id)
-            this.success(res, 201, 'Updated user', user);
+            const id = parseInt(req.params.id);
+            const { name } = req.body;
+
+            const user = await User.find(id);
+            if (!user) return this.error(res, 404, 'User not found');
+
+            const updated = await User.update(name, id);
+            this.success(res, 200, 'Updated user', updated);
         } catch (error) {
             this.error(res, 500, error.message);
         }
     }
 
-    // Delete user
     deleteUser = async (req, res) => {
-        const id = parseInt(req.params.id);
         try {
-            const user = await UserModel.find(id);
-            if (user.length === 0) {
-                this.error(res, 404, 'User not found');
-            }
-            await UserModel.delete(id)
+            const id = parseInt(req.params.id);
+
+            const user = await User.find(id);
+            if (!user) return this.error(res, 404, 'User not found');
+
+            await User.delete(id);
             this.success(res, 200, 'Deleted user');
         } catch (error) {
             this.error(res, 500, error.message);
         }
     }
 }
+
+export default UserController;
