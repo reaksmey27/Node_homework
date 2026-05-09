@@ -12,7 +12,7 @@ export class UserModel extends BaseModel {
     static async create(name) {
         const conn = await getConnection();
         const [result] = await conn.execute(
-            'INSERT INTO users (user) VALUES (?)',
+            'INSERT INTO users (name) VALUES (?)',
             [name]
         );
         return { id: result.insertId, name };
@@ -30,7 +30,7 @@ export class UserModel extends BaseModel {
     static async update(name, id) {
         const conn = await getConnection();
         await conn.execute(
-            'UPDATE users SET user = ? WHERE id = ?',
+            'UPDATE users SET name = ? WHERE id = ?',
             [name, id]
         );
         return { id, name };

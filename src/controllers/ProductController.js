@@ -1,11 +1,10 @@
-import { Product } from "../models/Product.js";
-import { BaseController } from "./baseController.js";
+import ProductService from '../Services/ProductService.js';
+import { BaseController } from './baseController.js';
 
-export class ProductController extends BaseController {
-
+class ProductController extends BaseController {
     getProducts = async (req, res) => {
         try {
-            const products = await Product.getAll();
+            const products = await ProductService.getAllProducts();
             this.success(res, 200, 'List of products', products);
         } catch (error) {
             this.error(res, 500, error.message);
@@ -14,8 +13,7 @@ export class ProductController extends BaseController {
 
     createProduct = async (req, res) => {
         try {
-            const { name, price } = req.body;
-            const product = await Product.create(name, price);
+            const product = await ProductService.createProduct(req.body);
             this.success(res, 201, 'Created product', product);
         } catch (error) {
             this.error(res, 500, error.message);
@@ -25,12 +23,11 @@ export class ProductController extends BaseController {
     updateProduct = async (req, res) => {
         try {
             const id = parseInt(req.params.id);
-            const { name, price } = req.body;
+            const exists = await ProductService.getProductById(id);
+            
+            if (!exists) return this.error(res, 404, 'Product not found');
 
-            const product = await Product.find(id);
-            if (!product) return this.error(res, 404, 'Product not found');
-
-            const updated = await Product.update(name, price, id);
+            const updated = await ProductService.updateProduct(id, req.body);
             this.success(res, 200, 'Updated product', updated);
         } catch (error) {
             this.error(res, 500, error.message);
@@ -40,11 +37,11 @@ export class ProductController extends BaseController {
     deleteProduct = async (req, res) => {
         try {
             const id = parseInt(req.params.id);
+            const exists = await ProductService.getProductById(id);
+            
+            if (!exists) return this.error(res, 404, 'Product not found');
 
-            const product = await Product.find(id);
-            if (!product) return this.error(res, 404, 'Product not found');
-
-            await Product.delete(id);
+            await ProductService.deleteProduct(id);
             this.success(res, 200, 'Deleted product');
         } catch (error) {
             this.error(res, 500, error.message);

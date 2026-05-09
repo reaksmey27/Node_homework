@@ -1,11 +1,10 @@
-import { UserModel as User } from "../models/userModel.js";
-import { BaseController } from "./baseController.js";
+import UserService from '../Services/UserService.js';
+import { BaseController } from './baseController.js';
 
 export class UserController extends BaseController {
-
     usersList = async (req, res) => {
         try {
-            const users = await User.getAll();
+            const users = await UserService.getAllUsers();
             this.success(res, 200, 'List of users', users);
         } catch (error) {
             this.error(res, 500, error.message);
@@ -14,8 +13,7 @@ export class UserController extends BaseController {
 
     createUser = async (req, res) => {
         try {
-            const { name } = req.body;
-            const user = await User.create(name);
+            const user = await UserService.createUser(req.body);
             this.success(res, 201, 'Created user', user);
         } catch (error) {
             this.error(res, 500, error.message);
@@ -25,12 +23,11 @@ export class UserController extends BaseController {
     updateUser = async (req, res) => {
         try {
             const id = parseInt(req.params.id);
-            const { name } = req.body;
-
-            const user = await User.find(id);
+            const user = await UserService.findUser(id);
+            
             if (!user) return this.error(res, 404, 'User not found');
 
-            const updated = await User.update(name, id);
+            const updated = await UserService.updateUser(id, req.body);
             this.success(res, 200, 'Updated user', updated);
         } catch (error) {
             this.error(res, 500, error.message);
@@ -40,11 +37,11 @@ export class UserController extends BaseController {
     deleteUser = async (req, res) => {
         try {
             const id = parseInt(req.params.id);
-
-            const user = await User.find(id);
+            const user = await UserService.findUser(id);
+            
             if (!user) return this.error(res, 404, 'User not found');
 
-            await User.delete(id);
+            await UserService.deleteUser(id);
             this.success(res, 200, 'Deleted user');
         } catch (error) {
             this.error(res, 500, error.message);
